@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Play, Copy, RotateCcw, ChevronDown, Loader2, Sparkles, Check, BookOpen, Clock, Keyboard } from "lucide-react";
+import {
+  Play, Copy, RotateCcw, ChevronDown, Loader2, Sparkles,
+  Check, BookOpen, Clock, Terminal, Bug, ShieldAlert, Zap, Wand2,
+} from "lucide-react";
 import Logo from "@/components/Logo";
 import CodeEditor from "@/components/CodeEditor";
 import ReviewPanel, { ReviewResult } from "@/components/ReviewPanel";
@@ -76,7 +79,6 @@ setInterval(setupDashboard, 1000);`,
 import pickle
 
 def load_user_data(filename):
-    # Load user-provided file
     with open('/data/' + filename, 'rb') as f:
         data = pickle.load(f)
     return data
@@ -119,7 +121,6 @@ function processUsers(users: any[]) {
   return total;
 }
 
-// No error handling
 const userData = fetchUser(123);
 console.log(userData.name);`,
     },
@@ -151,17 +152,17 @@ SELECT * FROM users WHERE email LIKE '%@gmail.com';`,
 type Status = "idle" | "loading" | "done" | "error";
 
 export default function Home() {
-  const [code, setCode]               = useState(EXAMPLES.javascript[0].code);
-  const [language, setLanguage]       = useState("javascript");
-  const [status, setStatus]           = useState<Status>("idle");
-  const [result, setResult]           = useState<ReviewResult | null>(null);
-  const [error, setError]             = useState("");
+  const [code, setCode]                     = useState(EXAMPLES.javascript[0].code);
+  const [language, setLanguage]             = useState("javascript");
+  const [status, setStatus]                 = useState<Status>("idle");
+  const [result, setResult]                 = useState<ReviewResult | null>(null);
+  const [error, setError]                   = useState("");
   const [showRefactored, setShowRefactored] = useState(false);
-  const [copied, setCopied]           = useState(false);
-  const [showLangMenu, setShowLangMenu] = useState(false);
-  const [showExamples, setShowExamples] = useState(false);
-  const [reviewTime, setReviewTime]   = useState<number | null>(null);
-  const [lineCount, setLineCount]     = useState(code.split("\n").length);
+  const [copied, setCopied]                 = useState(false);
+  const [showLangMenu, setShowLangMenu]     = useState(false);
+  const [showExamples, setShowExamples]     = useState(false);
+  const [reviewTime, setReviewTime]         = useState<number | null>(null);
+  const [lineCount, setLineCount]           = useState(code.split("\n").length);
 
   const langMenuRef    = useRef<HTMLDivElement>(null);
   const exampleMenuRef = useRef<HTMLDivElement>(null);
@@ -169,7 +170,6 @@ export default function Home() {
   const selectedLang = LANGUAGES.find(l => l.id === language)!;
   const examples     = EXAMPLES[language] ?? [];
 
-  // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) setShowLangMenu(false);
@@ -179,7 +179,6 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Ctrl+Enter shortcut
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -213,10 +212,10 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Review failed");
       setResult(data);
-      setReviewTime(((Date.now() - t0) / 1000));
+      setReviewTime((Date.now() - t0) / 1000);
       setStatus("done");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Review failed");
       setStatus("error");
     }
   }
@@ -241,41 +240,52 @@ export default function Home() {
 
   const displayCode = showRefactored && result?.refactoredCode ? result.refactoredCode : code;
 
-  return (
-    <div className="min-h-screen bg-[#0a0c10] flex flex-col">
+  /* ── shared style tokens ── */
+  const surface  = { background: "var(--bg-elevated)", border: "1px solid var(--border)" } as const;
+  const surfaceHover = "hover:border-[#2d527a] hover:text-white";
 
-      {/* Header */}
-      <header className="border-b border-[#21262d] bg-[#0d1117]/90 backdrop-blur-xl sticky top-0 z-20 flex-shrink-0">
-        <div className="max-w-[1600px] mx-auto px-5 h-13 flex items-center gap-3" style={{ height: 52 }}>
+  return (
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg-base)" }}>
+
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-20 flex-shrink-0"
+        style={{ background: "rgba(5,12,24,0.92)", backdropFilter: "blur(16px)", borderBottom: "1px solid var(--border)" }}>
+        <div className="max-w-[1600px] mx-auto px-5 flex items-center gap-3" style={{ height: 52 }}>
+
           <Logo size={26} />
-          <span className="font-bold text-white text-sm">CodeReview AI</span>
-          <span className="hidden sm:flex items-center gap-1.5 text-xs px-2 py-0.5 bg-violet-500/10 border border-violet-500/20 text-violet-300 rounded-full">
-            <Sparkles className="w-3 h-3" /> Groq · Llama 3.3
+          <span className="font-bold text-white text-sm tracking-tight">
+            Code<span className="text-blue-400">Review</span> <span className="text-slate-500 font-normal">AI</span>
           </span>
 
-          <div className="ml-auto flex items-center gap-3 text-xs text-gray-500">
+          {/* model badge */}
+          <span className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium"
+            style={{ background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)", color: "#67e8f9" }}>
+            <Sparkles className="w-3 h-3" />
+            Groq · Llama 3.3
+          </span>
+
+          <div className="ml-auto flex items-center gap-4 text-xs">
             {status === "done" && reviewTime && (
-              <span className="flex items-center gap-1 text-green-500/80">
-                <Clock className="w-3 h-3" />
-                {reviewTime.toFixed(1)}s
+              <span className="flex items-center gap-1 font-medium" style={{ color: "#34d399" }}>
+                <Clock className="w-3.5 h-3.5" />{reviewTime.toFixed(1)}s
               </span>
             )}
-            <span className="hidden md:flex items-center gap-1">
-              <Keyboard className="w-3 h-3" /> Ctrl+Enter to review
+            <span className="hidden md:flex items-center gap-1.5 text-slate-500">
+              <Terminal className="w-3.5 h-3.5" />
+              Ctrl+Enter to run
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Live
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#34d399", boxShadow: "0 0 6px #34d399" }} />
+              <span style={{ color: "#6ee7b7" }}>Live</span>
             </span>
           </div>
         </div>
       </header>
 
-      {/* Main layout */}
-      <div
-        className="flex-1 flex flex-col lg:flex-row max-w-[1600px] mx-auto w-full px-4 py-4 gap-4 overflow-hidden"
-        style={{ height: "calc(100vh - 52px)" }}
-      >
+      {/* ── Main layout ── */}
+      <div className="flex-1 flex flex-col lg:flex-row max-w-[1600px] mx-auto w-full px-4 py-4 gap-4 overflow-hidden"
+        style={{ height: "calc(100vh - 52px)" }}>
+
         {/* LEFT: Editor */}
         <div className="flex-1 flex flex-col min-h-[400px] lg:min-h-0">
 
@@ -286,17 +296,25 @@ export default function Home() {
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => { setShowLangMenu(!showLangMenu); setShowExamples(false); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161b22] border border-[#21262d] rounded-xl text-sm text-gray-300 hover:text-white hover:border-[#30363d] transition-colors"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm transition-all ${surfaceHover}`}
+                style={surface}
               >
-                <span className="font-mono text-xs text-violet-400 font-semibold">{selectedLang.label}</span>
-                <ChevronDown className="w-3 h-3 text-gray-500" />
+                <span className="font-mono text-xs font-bold text-blue-400">{selectedLang.label}</span>
+                <ChevronDown className="w-3 h-3 text-slate-600" />
               </button>
+
               {showLangMenu && (
-                <div className="absolute top-full mt-1 left-0 bg-[#161b22] border border-[#30363d] rounded-xl p-1 z-30 shadow-2xl grid grid-cols-2 gap-0.5 min-w-[210px]">
+                <div className="absolute top-full mt-1 left-0 rounded-xl p-1 z-30 grid grid-cols-2 gap-0.5 min-w-[210px]"
+                  style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)", boxShadow: "0 12px 40px rgba(0,0,0,0.6)" }}>
                   {LANGUAGES.map(lang => (
                     <button key={lang.id}
                       onClick={() => { setLanguage(lang.id); setShowLangMenu(false); }}
-                      className={`text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${language === lang.id ? "bg-violet-500/20 text-violet-300" : "text-gray-400 hover:text-white hover:bg-white/5"}`}>
+                      className={`text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                        language === lang.id
+                          ? "text-blue-300"
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                      }`}
+                      style={language === lang.id ? { background: "rgba(59,130,246,0.15)" } : {}}>
                       {lang.label}
                     </button>
                   ))}
@@ -304,23 +322,25 @@ export default function Home() {
               )}
             </div>
 
-            {/* Examples dropdown */}
+            {/* Examples */}
             {examples.length > 0 && (
               <div className="relative" ref={exampleMenuRef}>
                 <button
                   onClick={() => { setShowExamples(!showExamples); setShowLangMenu(false); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161b22] border border-[#21262d] rounded-xl text-sm text-gray-400 hover:text-white hover:border-[#30363d] transition-colors"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-slate-400 transition-all ${surfaceHover}`}
+                  style={surface}
                 >
-                  <BookOpen className="w-3.5 h-3.5" />
+                  <BookOpen className="w-3.5 h-3.5 text-blue-400" />
                   Examples
-                  <ChevronDown className="w-3 h-3 text-gray-500" />
+                  <ChevronDown className="w-3 h-3 text-slate-600" />
                 </button>
                 {showExamples && (
-                  <div className="absolute top-full mt-1 left-0 bg-[#161b22] border border-[#30363d] rounded-xl p-1 z-30 shadow-2xl min-w-[160px]">
+                  <div className="absolute top-full mt-1 left-0 rounded-xl p-1 z-30 min-w-[160px]"
+                    style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)", boxShadow: "0 12px 40px rgba(0,0,0,0.6)" }}>
                     {examples.map((ex, i) => (
                       <button key={i}
                         onClick={() => { setCode(ex.code); setLineCount(ex.code.split("\n").length); setShowExamples(false); setResult(null); setStatus("idle"); setShowRefactored(false); }}
-                        className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                        className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
                         {ex.label}
                       </button>
                     ))}
@@ -330,23 +350,26 @@ export default function Home() {
             )}
 
             {showRefactored && (
-              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-violet-500/10 border border-violet-500/20 text-violet-300 rounded-xl">
-                <Sparkles className="w-3 h-3" /> AI Refactored
+              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl font-medium"
+                style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#6ee7b7" }}>
+                <Wand2 className="w-3 h-3" /> AI Refactored
               </span>
             )}
 
-            {/* Right side of toolbar */}
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-gray-600 tabular-nums hidden sm:block">
-                {lineCount} lines
-              </span>
+              <span className="text-xs text-slate-600 tabular-nums hidden sm:block">{lineCount} lines</span>
+
               <button onClick={handleCopy}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161b22] border border-[#21262d] rounded-xl text-sm text-gray-400 hover:text-white transition-colors">
-                {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-slate-400 transition-all ${surfaceHover}`}
+                style={surface}>
+                {copied
+                  ? <><Check className="w-3.5 h-3.5 text-emerald-400" /><span className="hidden sm:inline">Copied!</span></>
+                  : <><Copy className="w-3.5 h-3.5" /><span className="hidden sm:inline">Copy</span></>}
               </button>
+
               <button onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161b22] border border-[#21262d] rounded-xl text-sm text-gray-400 hover:text-white transition-colors">
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-slate-400 transition-all ${surfaceHover}`}
+                style={surface}>
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Reset</span>
               </button>
@@ -354,7 +377,8 @@ export default function Home() {
           </div>
 
           {/* Monaco editor */}
-          <div className="flex-1 rounded-2xl overflow-hidden border border-[#21262d] bg-[#1e1e1e]">
+          <div className="flex-1 rounded-2xl overflow-hidden bg-[#1e1e1e]"
+            style={{ border: "1px solid rgba(59,130,246,0.2)" }}>
             <CodeEditor
               value={displayCode}
               onChange={showRefactored ? undefined : handleCodeChange}
@@ -367,44 +391,55 @@ export default function Home() {
           <button
             onClick={handleReview}
             disabled={status === "loading" || !code.trim()}
-            className="mt-3 flex items-center justify-center gap-2 w-full py-3 font-semibold rounded-xl transition-all duration-200 shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none
-              bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white hover:scale-[1.01] active:scale-[0.99] shadow-violet-500/20
-              disabled:from-gray-700 disabled:to-gray-700 disabled:text-gray-500"
+            className="mt-3 flex items-center justify-center gap-2 w-full py-3 font-semibold rounded-xl transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 text-white"
+            style={
+              status === "loading" || !code.trim()
+                ? { background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "#334155" }
+                : {
+                    background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%)",
+                    border: "1px solid rgba(59,130,246,0.4)",
+                    boxShadow: "0 4px 20px rgba(37,99,235,0.35), 0 1px 0 rgba(255,255,255,0.08) inset",
+                  }
+            }
           >
-            {status === "loading" ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Reviewing with Llama 3.3...</>
-            ) : (
-              <><Play className="w-4 h-4" /> Review Code <span className="hidden md:inline text-white/50 text-xs ml-1">Ctrl+Enter</span></>
-            )}
+            {status === "loading"
+              ? <><Loader2 className="w-4 h-4 animate-spin" />Reviewing with Llama 3.3...</>
+              : <><Play className="w-4 h-4 fill-current" />Review Code <span className="hidden md:inline text-white/40 text-xs ml-1 font-normal">Ctrl+Enter</span></>
+            }
           </button>
         </div>
 
         {/* RIGHT: Results panel */}
         <div className="w-full lg:w-[430px] xl:w-[460px] flex-shrink-0 flex flex-col overflow-hidden">
-          {status === "idle" && (
-            <EmptyState />
-          )}
+
+          {status === "idle" && <EmptyState />}
 
           {status === "loading" && (
             <div className="flex-1 flex flex-col gap-3">
-              <div className="skeleton h-[160px] rounded-2xl" />
-              <div className="skeleton h-[72px] rounded-2xl" />
-              <div className="skeleton h-[100px] rounded-2xl" />
-              <div className="skeleton h-[100px] rounded-2xl" />
-              <div className="skeleton h-[100px] rounded-2xl" />
-              <div className="text-center text-xs text-gray-600 mt-1 flex items-center justify-center gap-2">
-                <Loader2 className="w-3 h-3 animate-spin" /> Analysing with Llama 3.3 70B...
+              <div className="skeleton h-[160px]" />
+              <div className="skeleton h-[72px]" />
+              <div className="skeleton h-[100px]" />
+              <div className="skeleton h-[100px]" />
+              <div className="skeleton h-[100px]" />
+              <div className="text-center text-xs text-slate-600 mt-1 flex items-center justify-center gap-2">
+                <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+                Analysing with Llama 3.3 70B...
               </div>
             </div>
           )}
 
           {status === "error" && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border border-red-500/20 rounded-2xl bg-red-500/5">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-3 text-2xl">⚠️</div>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 rounded-2xl"
+              style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
+                style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <ShieldAlert className="w-6 h-6 text-red-400" />
+              </div>
               <h3 className="text-red-400 font-semibold mb-1">Review failed</h3>
-              <p className="text-sm text-gray-500 max-w-[260px]">{error}</p>
+              <p className="text-sm text-slate-500 max-w-[260px]">{error}</p>
               <button onClick={() => setStatus("idle")}
-                className="mt-4 px-4 py-2 bg-[#161b22] border border-[#30363d] rounded-xl text-sm text-gray-400 hover:text-white transition-colors">
+                className="mt-4 px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-white transition-colors"
+                style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)" }}>
                 Try again
               </button>
             </div>
@@ -425,26 +460,42 @@ export default function Home() {
 }
 
 function EmptyState() {
+  const features = [
+    { icon: Bug,         label: "Bug detection",    bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)",   color: "#f87171" },
+    { icon: ShieldAlert, label: "Security audit",   bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.18)",  color: "#fb923c" },
+    { icon: Zap,         label: "Performance tips", bg: "rgba(234,179,8,0.08)",   border: "rgba(234,179,8,0.18)",   color: "#facc15" },
+    { icon: Wand2,       label: "Refactored code",  bg: "rgba(59,130,246,0.08)",  border: "rgba(59,130,246,0.18)",  color: "#60a5fa" },
+  ];
+
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-[#21262d] rounded-2xl gap-4">
-      <div className="w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-        <Sparkles className="w-6 h-6 text-violet-400" />
+    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 rounded-2xl gap-5"
+      style={{ border: "1px dashed rgba(59,130,246,0.2)", background: "rgba(59,130,246,0.02)" }}>
+
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+        style={{
+          background: "linear-gradient(135deg, rgba(29,78,216,0.2), rgba(8,145,178,0.1))",
+          border: "1px solid rgba(59,130,246,0.25)",
+          boxShadow: "0 0 24px rgba(37,99,235,0.12)",
+        }}>
+        <Terminal className="w-6 h-6 text-blue-400" />
       </div>
+
       <div>
         <h2 className="text-base font-semibold text-white mb-1.5">Ready to review</h2>
-        <p className="text-sm text-gray-500 leading-relaxed max-w-[240px]">
-          Paste your code and click <strong className="text-gray-400">Review Code</strong> or press <kbd className="px-1.5 py-0.5 bg-[#21262d] rounded text-gray-400 text-xs font-mono">Ctrl+Enter</kbd>
+        <p className="text-sm text-slate-500 leading-relaxed max-w-[240px]">
+          Paste your code and click <strong className="text-slate-300">Review Code</strong> or press{" "}
+          <kbd className="px-1.5 py-0.5 rounded text-xs font-mono text-slate-300"
+            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)" }}>Ctrl+Enter</kbd>
         </p>
       </div>
+
       <div className="grid grid-cols-2 gap-2 w-full max-w-[280px]">
-        {[
-          { icon: "🐛", label: "Bug detection" },
-          { icon: "🔒", label: "Security audit" },
-          { icon: "⚡", label: "Performance tips" },
-          { icon: "✨", label: "Refactored code" },
-        ].map(f => (
-          <div key={f.label} className="flex items-center gap-2 bg-[#0d1117] border border-[#21262d] rounded-xl px-3 py-2 text-xs text-gray-500">
-            <span>{f.icon}</span>{f.label}
+        {features.map(({ icon: Icon, label, bg, border, color }) => (
+          <div key={label}
+            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium"
+            style={{ background: bg, border: `1px solid ${border}`, color }}>
+            <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+            {label}
           </div>
         ))}
       </div>

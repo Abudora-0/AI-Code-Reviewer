@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, AlertCircle, Copy, Check, Clock } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Copy, Check, Clock, Wand2 } from "lucide-react";
 import ScoreRing from "./ScoreRing";
 import IssueCard, { Issue } from "./IssueCard";
 
@@ -37,22 +37,12 @@ export default function ReviewPanel({ result, reviewTime, onViewRefactored, show
   };
 
   async function copyMarkdown() {
-    const lines = [
-      `# Code Review`,
-      ``,
-      `**Quality Score:** ${result.score}/100`,
-      ``,
-      `## Summary`,
-      result.summary,
-      ``,
-    ];
-
+    const lines = [`# Code Review\n`, `**Quality Score:** ${result.score}/100\n`, `## Summary`, result.summary, ``];
     if (result.positives?.length) {
       lines.push(`## What's Good`);
       result.positives.forEach(p => lines.push(`- ✓ ${p}`));
       lines.push(``);
     }
-
     if (result.issues.length) {
       lines.push(`## Issues (${result.issues.length})`);
       result.issues.forEach(issue => {
@@ -61,7 +51,6 @@ export default function ReviewPanel({ result, reviewTime, onViewRefactored, show
         lines.push(``, issue.message, ``, `**Fix:** ${issue.suggestion}`);
       });
     }
-
     await navigator.clipboard.writeText(lines.join("\n"));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -71,25 +60,30 @@ export default function ReviewPanel({ result, reviewTime, onViewRefactored, show
     <div className="h-full flex flex-col gap-3 overflow-y-auto pr-1 animate-fade-in-up">
 
       {/* Score card */}
-      <div className="bg-[#0d1117] border border-[#21262d] rounded-2xl p-4 flex-shrink-0">
+      <div className="rounded-2xl p-4 flex-shrink-0"
+        style={{
+          background: "linear-gradient(135deg, #080f1e 0%, #0c1830 100%)",
+          border: "1px solid rgba(59,130,246,0.25)",
+          boxShadow: "0 0 28px rgba(37,99,235,0.08)",
+        }}>
         <div className="flex items-start gap-4">
           <ScoreRing score={result.score} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-sm font-semibold text-white">Code Quality</h3>
+              <h3 className="text-sm font-bold text-white tracking-tight">Code Quality</h3>
               {reviewTime && (
-                <span className="flex items-center gap-1 text-[11px] text-gray-600">
+                <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: "#6ee7b7" }}>
                   <Clock className="w-3 h-3" />{reviewTime.toFixed(1)}s
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">{result.summary}</p>
+            <p className="text-sm text-slate-400 leading-relaxed">{result.summary}</p>
             <div className="flex flex-wrap gap-1.5 mt-2.5">
-              {counts.bug > 0        && <Badge color="red"    label={`🐛 ${counts.bug} bug${counts.bug > 1 ? "s" : ""}`} />}
-              {counts.security > 0   && <Badge color="orange" label={`🔒 ${counts.security} security`} />}
-              {counts.performance > 0 && <Badge color="yellow" label={`⚡ ${counts.performance} perf`} />}
-              {counts.style > 0      && <Badge color="blue"   label={`🎨 ${counts.style} style`} />}
-              {result.issues.length === 0 && <Badge color="green" label="✨ No issues" />}
+              {counts.bug > 0         && <Pill color="red"    label={`${counts.bug} bug${counts.bug > 1 ? "s" : ""}`} />}
+              {counts.security > 0    && <Pill color="orange" label={`${counts.security} security`} />}
+              {counts.performance > 0 && <Pill color="yellow" label={`${counts.performance} perf`} />}
+              {counts.style > 0       && <Pill color="blue"   label={`${counts.style} style`} />}
+              {result.issues.length === 0 && <Pill color="green" label="No issues found" />}
             </div>
           </div>
         </div>
@@ -97,14 +91,16 @@ export default function ReviewPanel({ result, reviewTime, onViewRefactored, show
 
       {/* Positives */}
       {result.positives?.length > 0 && (
-        <div className="bg-green-500/5 border border-green-500/15 rounded-2xl p-4 flex-shrink-0">
-          <h3 className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5" /> What's good
+        <div className="rounded-2xl p-4 flex-shrink-0"
+          style={{ background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.18)" }}>
+          <h3 className="text-xs font-bold uppercase tracking-widest mb-2.5 flex items-center gap-1.5"
+            style={{ color: "#34d399" }}>
+            <CheckCircle2 className="w-3.5 h-3.5" /> What&apos;s good
           </h3>
           <ul className="space-y-1.5">
             {result.positives.map((p, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
-                <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
                 {p}
               </li>
             ))}
@@ -115,8 +111,9 @@ export default function ReviewPanel({ result, reviewTime, onViewRefactored, show
       {/* Issues */}
       {sorted.length > 0 && (
         <div className="flex-shrink-0">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5 px-1">
-            <AlertCircle className="w-3.5 h-3.5" /> Issues ({sorted.length})
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5 px-1">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            Issues ({sorted.length})
           </h3>
           <div className="space-y-2">
             {sorted.map((issue, i) => (
@@ -126,40 +123,55 @@ export default function ReviewPanel({ result, reviewTime, onViewRefactored, show
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Actions */}
       <div className="flex-shrink-0 flex flex-col gap-2 pb-2">
         {result.refactoredCode && (
           <button
             onClick={onViewRefactored}
-            className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all duration-200 border ${
+            className="w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+            style={
               showingRefactored
-                ? "bg-violet-500/15 border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
-                : "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white border-transparent shadow-lg shadow-violet-500/20 hover:scale-[1.02] active:scale-[0.98]"
-            }`}
+                ? { background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", color: "#6ee7b7" }
+                : {
+                    background: "linear-gradient(135deg, #1d4ed8, #0891b2)",
+                    border: "1px solid rgba(59,130,246,0.3)",
+                    color: "white",
+                    boxShadow: "0 4px 16px rgba(37,99,235,0.3)",
+                  }
+            }
           >
-            {showingRefactored ? "← Back to original code" : "✨ View AI-refactored code"}
+            <Wand2 className="w-3.5 h-3.5" />
+            {showingRefactored ? "Back to original code" : "View AI-refactored code"}
           </button>
         )}
         <button
           onClick={copyMarkdown}
-          className="w-full py-2.5 px-4 rounded-xl text-sm font-medium border border-[#30363d] bg-[#161b22] text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+          style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)" }}
         >
-          {copied ? <><Check className="w-3.5 h-3.5 text-green-400" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Copy review as Markdown</>}
+          {copied
+            ? <><Check className="w-3.5 h-3.5 text-emerald-400" />Copied to clipboard</>
+            : <><Copy className="w-3.5 h-3.5" />Copy review as Markdown</>}
         </button>
       </div>
     </div>
   );
 }
 
-function Badge({ color, label }: { color: string; label: string }) {
-  const styles: Record<string, string> = {
-    red:    "bg-red-500/10 text-red-400 border-red-500/20",
-    orange: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-    yellow: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-    blue:   "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    green:  "bg-green-500/10 text-green-400 border-green-500/20",
-  };
+const PILL_STYLES: Record<string, { bg: string; border: string; color: string }> = {
+  red:    { bg: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  color: "#fca5a5" },
+  orange: { bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.22)", color: "#fdba74" },
+  yellow: { bg: "rgba(234,179,8,0.08)",  border: "rgba(234,179,8,0.22)",  color: "#fde047" },
+  blue:   { bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.22)", color: "#93c5fd" },
+  green:  { bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", color: "#6ee7b7" },
+};
+
+function Pill({ color, label }: { color: string; label: string }) {
+  const s = PILL_STYLES[color];
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full border ${styles[color]}`}>{label}</span>
+    <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+      style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color }}>
+      {label}
+    </span>
   );
 }

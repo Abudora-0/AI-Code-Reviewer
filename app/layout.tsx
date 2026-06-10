@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "CodeReview AI — Instant AI Code Reviews",
   description: "Paste your code and get instant AI-powered code reviews with quality scores, bug detection, and refactoring suggestions. Powered by Groq + Llama.",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
