@@ -9,9 +9,13 @@ An AI-powered code review tool that analyzes your code and delivers instant, str
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?logo=tailwind-css&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036)
 
+## Design
+
+A "phosphor audit terminal": warm graphite with an amber CRT accent, all-mono typography (JetBrains Mono), faint scanlines, a segmented instrument gauge for the score, compiler-style diagnostics (`E01 · SEC · L42`), and a vim-style status line. No gradients, no glassmorphism.
+
 ## Features
 
-- **Quality Score** — animated 0–100 ring score with letter grade
+- **Quality Score** — animated 0–100 instrument gauge with a stamped PASS / REVIEW / CAUTION / REJECT verdict
 - **Bug Detection** — pinpoints issues with exact line numbers
 - **Security Analysis** — flags SQL injection, XSS, and other OWASP vulnerabilities
 - **Performance Suggestions** — highlights inefficient patterns and proposes fixes

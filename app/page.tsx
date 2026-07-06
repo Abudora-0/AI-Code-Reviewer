@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import {
-  Play, Copy, RotateCcw, ChevronDown, Loader2, Sparkles,
-  Check, BookOpen, Clock, Terminal, Bug, ShieldAlert, Zap, Wand2,
-} from "lucide-react";
+import { Copy, RotateCcw, ChevronDown, Check } from "lucide-react";
 import Logo from "@/components/Logo";
 import CodeEditor from "@/components/CodeEditor";
 import ReviewPanel, { ReviewResult } from "@/components/ReviewPanel";
@@ -240,82 +237,84 @@ export default function Home() {
 
   const displayCode = showRefactored && result?.refactoredCode ? result.refactoredCode : code;
 
-  /* ── shared style tokens ── */
-  const surface  = { background: "var(--bg-elevated)", border: "1px solid var(--border)" } as const;
-  const surfaceHover = "hover:border-[#2d527a] hover:text-white";
+  const ledClass = status === "loading" ? "led-busy" : status === "error" ? "led-err" : "led-ok";
+  const modeLabel =
+    status === "loading" ? "AUDITING" :
+    status === "error"   ? "FAULT"    :
+    showRefactored       ? "REFACTOR" : "READY";
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg-base)" }}>
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-20 flex-shrink-0"
-        style={{ background: "rgba(5,12,24,0.92)", backdropFilter: "blur(16px)", borderBottom: "1px solid var(--border)" }}>
-        <div className="max-w-[1600px] mx-auto px-5 flex items-center gap-3" style={{ height: 52 }}>
-
-          <Logo size={26} />
-          <span className="font-bold text-white text-sm tracking-tight">
-            Code<span className="text-blue-400">Review</span> <span className="text-slate-500 font-normal">AI</span>
+      <header
+        className="flex-shrink-0"
+        style={{ background: "var(--bg-surface)", borderBottom: "1px solid var(--border-muted)" }}
+      >
+        <div className="max-w-[1600px] mx-auto px-4 flex items-center gap-3" style={{ height: 46 }}>
+          <Logo size={22} />
+          <span className="font-bold text-[13px] tracking-[0.08em]" style={{ color: "var(--ink)" }}>
+            CODEREVIEW<span style={{ color: "var(--amber)" }}>.SYS</span>
           </span>
 
-          {/* model badge */}
-          <span className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium"
-            style={{ background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.2)", color: "#67e8f9" }}>
-            <Sparkles className="w-3 h-3" />
-            Groq · Llama 3.3
+          <span
+            className="hidden sm:block text-[10px] px-2 py-0.5 tracking-[0.15em]"
+            style={{ border: "1px solid var(--border-muted)", color: "var(--ink-muted)" }}
+          >
+            ENGINE: GROQ / LLAMA-3.3-70B
           </span>
 
-          <div className="ml-auto flex items-center gap-4 text-xs">
+          <div className="ml-auto flex items-center gap-4 text-[10px] tracking-[0.12em]">
             {status === "done" && reviewTime && (
-              <span className="flex items-center gap-1 font-medium" style={{ color: "#34d399" }}>
-                <Clock className="w-3.5 h-3.5" />{reviewTime.toFixed(1)}s
+              <span className="tabular-nums" style={{ color: "var(--ok)" }}>
+                AUDIT COMPLETE · {reviewTime.toFixed(1)}s
               </span>
             )}
-            <span className="hidden md:flex items-center gap-1.5 text-slate-500">
-              <Terminal className="w-3.5 h-3.5" />
-              Ctrl+Enter to run
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#34d399", boxShadow: "0 0 6px #34d399" }} />
-              <span style={{ color: "#6ee7b7" }}>Live</span>
+            <span className="flex items-center gap-2" style={{ color: "var(--ink-muted)" }}>
+              <span className={`led ${ledClass}`} />
+              {modeLabel}
             </span>
           </div>
         </div>
       </header>
 
       {/* ── Main layout ── */}
-      <div className="flex-1 flex flex-col lg:flex-row max-w-[1600px] mx-auto w-full px-4 py-4 gap-4 overflow-hidden"
-        style={{ height: "calc(100vh - 52px)" }}>
+      <div
+        className="flex-1 flex flex-col lg:flex-row max-w-[1600px] mx-auto w-full px-4 py-4 gap-4 overflow-hidden"
+        style={{ height: "calc(100vh - 46px - 30px)" }}
+      >
 
-        {/* LEFT: Editor */}
-        <div className="flex-1 flex flex-col min-h-[400px] lg:min-h-0">
+        {/* LEFT: Editor panel */}
+        <div className="flex-1 flex flex-col min-h-[400px] lg:min-h-0 panel">
 
-          {/* Toolbar */}
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+          {/* panel titlebar + toolbar */}
+          <div
+            className="flex items-center gap-2 px-3 py-2 flex-wrap flex-shrink-0"
+            style={{ borderBottom: "1px solid var(--border-muted)", background: "var(--bg-elevated)" }}
+          >
+            <span className="panel-title mr-1">
+              ▌ Source {showRefactored && <span style={{ color: "var(--ok)" }}>· Refactored</span>}
+            </span>
 
             {/* Language selector */}
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => { setShowLangMenu(!showLangMenu); setShowExamples(false); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm transition-all ${surfaceHover}`}
-                style={surface}
+                className="tbtn"
               >
-                <span className="font-mono text-xs font-bold text-blue-400">{selectedLang.label}</span>
-                <ChevronDown className="w-3 h-3 text-slate-600" />
+                <span style={{ color: "var(--amber)" }}>{selectedLang.label}</span>
+                <ChevronDown className="w-3 h-3" />
               </button>
 
               {showLangMenu && (
-                <div className="absolute top-full mt-1 left-0 rounded-xl p-1 z-30 grid grid-cols-2 gap-0.5 min-w-[210px]"
-                  style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)", boxShadow: "0 12px 40px rgba(0,0,0,0.6)" }}>
+                <div className="absolute top-full mt-1 left-0 z-30 grid grid-cols-2 min-w-[220px] dropdown p-1">
                   {LANGUAGES.map(lang => (
-                    <button key={lang.id}
+                    <button
+                      key={lang.id}
                       onClick={() => { setLanguage(lang.id); setShowLangMenu(false); }}
-                      className={`text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                        language === lang.id
-                          ? "text-blue-300"
-                          : "text-slate-400 hover:text-white hover:bg-white/5"
-                      }`}
-                      style={language === lang.id ? { background: "rgba(59,130,246,0.15)" } : {}}>
-                      {lang.label}
+                      className={`dropdown-item ${language === lang.id ? "active" : ""}`}
+                    >
+                      {language === lang.id ? "▸ " : "  "}{lang.label}
                     </button>
                   ))}
                 </div>
@@ -327,20 +326,19 @@ export default function Home() {
               <div className="relative" ref={exampleMenuRef}>
                 <button
                   onClick={() => { setShowExamples(!showExamples); setShowLangMenu(false); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-slate-400 transition-all ${surfaceHover}`}
-                  style={surface}
+                  className="tbtn"
                 >
-                  <BookOpen className="w-3.5 h-3.5 text-blue-400" />
-                  Examples
-                  <ChevronDown className="w-3 h-3 text-slate-600" />
+                  Samples
+                  <ChevronDown className="w-3 h-3" />
                 </button>
                 {showExamples && (
-                  <div className="absolute top-full mt-1 left-0 rounded-xl p-1 z-30 min-w-[160px]"
-                    style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)", boxShadow: "0 12px 40px rgba(0,0,0,0.6)" }}>
+                  <div className="absolute top-full mt-1 left-0 z-30 min-w-[180px] dropdown p-1">
                     {examples.map((ex, i) => (
-                      <button key={i}
+                      <button
+                        key={i}
                         onClick={() => { setCode(ex.code); setLineCount(ex.code.split("\n").length); setShowExamples(false); setResult(null); setStatus("idle"); setShowRefactored(false); }}
-                        className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                        className="dropdown-item"
+                      >
                         {ex.label}
                       </button>
                     ))}
@@ -349,36 +347,21 @@ export default function Home() {
               </div>
             )}
 
-            {showRefactored && (
-              <span className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl font-medium"
-                style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#6ee7b7" }}>
-                <Wand2 className="w-3 h-3" /> AI Refactored
-              </span>
-            )}
-
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-slate-600 tabular-nums hidden sm:block">{lineCount} lines</span>
-
-              <button onClick={handleCopy}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-slate-400 transition-all ${surfaceHover}`}
-                style={surface}>
+              <button onClick={handleCopy} className="tbtn">
                 {copied
-                  ? <><Check className="w-3.5 h-3.5 text-emerald-400" /><span className="hidden sm:inline">Copied!</span></>
-                  : <><Copy className="w-3.5 h-3.5" /><span className="hidden sm:inline">Copy</span></>}
+                  ? <><Check className="w-3 h-3" style={{ color: "var(--ok)" }} /><span className="hidden sm:inline">Copied</span></>
+                  : <><Copy className="w-3 h-3" /><span className="hidden sm:inline">Copy</span></>}
               </button>
-
-              <button onClick={handleReset}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm text-slate-400 transition-all ${surfaceHover}`}
-                style={surface}>
-                <RotateCcw className="w-3.5 h-3.5" />
+              <button onClick={handleReset} className="tbtn">
+                <RotateCcw className="w-3 h-3" />
                 <span className="hidden sm:inline">Reset</span>
               </button>
             </div>
           </div>
 
           {/* Monaco editor */}
-          <div className="flex-1 rounded-2xl overflow-hidden bg-[#1e1e1e]"
-            style={{ border: "1px solid rgba(59,130,246,0.2)" }}>
+          <div className="flex-1 overflow-hidden" style={{ background: "#0b0b09" }}>
             <CodeEditor
               value={displayCode}
               onChange={showRefactored ? undefined : handleCodeChange}
@@ -387,60 +370,40 @@ export default function Home() {
             />
           </div>
 
-          {/* Review button */}
-          <button
-            onClick={handleReview}
-            disabled={status === "loading" || !code.trim()}
-            className="mt-3 flex items-center justify-center gap-2 w-full py-3 font-semibold rounded-xl transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 text-white"
-            style={
-              status === "loading" || !code.trim()
-                ? { background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "#334155" }
-                : {
-                    background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%)",
-                    border: "1px solid rgba(59,130,246,0.4)",
-                    boxShadow: "0 4px 20px rgba(37,99,235,0.35), 0 1px 0 rgba(255,255,255,0.08) inset",
-                  }
-            }
-          >
-            {status === "loading"
-              ? <><Loader2 className="w-4 h-4 animate-spin" />Reviewing with Llama 3.3...</>
-              : <><Play className="w-4 h-4 fill-current" />Review Code <span className="hidden md:inline text-white/40 text-xs ml-1 font-normal">Ctrl+Enter</span></>
-            }
-          </button>
+          {/* Run button */}
+          <div className="flex-shrink-0 p-3" style={{ borderTop: "1px solid var(--border-muted)" }}>
+            <button
+              onClick={handleReview}
+              disabled={status === "loading" || !code.trim()}
+              className="tbtn tbtn-primary w-full justify-center py-3 text-[12px] tracking-[0.18em]"
+            >
+              {status === "loading"
+                ? <>▚ AUDIT IN PROGRESS…</>
+                : <>▶ RUN AUDIT <span className="opacity-50 normal-case tracking-normal font-normal ml-1">Ctrl+Enter</span></>}
+            </button>
+          </div>
         </div>
 
-        {/* RIGHT: Results panel */}
+        {/* RIGHT: Report panel */}
         <div className="w-full lg:w-[430px] xl:w-[460px] flex-shrink-0 flex flex-col overflow-hidden">
 
           {status === "idle" && <EmptyState />}
 
-          {status === "loading" && (
-            <div className="flex-1 flex flex-col gap-3">
-              <div className="skeleton h-[160px]" />
-              <div className="skeleton h-[72px]" />
-              <div className="skeleton h-[100px]" />
-              <div className="skeleton h-[100px]" />
-              <div className="skeleton h-[100px]" />
-              <div className="text-center text-xs text-slate-600 mt-1 flex items-center justify-center gap-2">
-                <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
-                Analysing with Llama 3.3 70B...
-              </div>
-            </div>
-          )}
+          {status === "loading" && <LoadingState />}
 
           {status === "error" && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 rounded-2xl"
-              style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.2)" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
-                style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                <ShieldAlert className="w-6 h-6 text-red-400" />
-              </div>
-              <h3 className="text-red-400 font-semibold mb-1">Review failed</h3>
-              <p className="text-sm text-slate-500 max-w-[260px]">{error}</p>
-              <button onClick={() => setStatus("idle")}
-                className="mt-4 px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-white transition-colors"
-                style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)" }}>
-                Try again
+            <div
+              className="flex-1 flex flex-col items-center justify-center text-center p-8 panel"
+              style={{ borderColor: "rgba(255,84,73,0.4)" }}
+            >
+              <p className="text-[10px] font-bold tracking-[0.25em] mb-3" style={{ color: "var(--sev-critical)" }}>
+                ▌ SYSTEM FAULT
+              </p>
+              <p className="text-[13px] max-w-[280px] leading-relaxed" style={{ color: "var(--ink-muted)" }}>
+                {error}
+              </p>
+              <button onClick={() => setStatus("idle")} className="tbtn mt-5">
+                Acknowledge · Reset
               </button>
             </div>
           )}
@@ -455,49 +418,114 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* ── Status line ── */}
+      <footer
+        className="flex-shrink-0 flex items-center text-[10px] tracking-[0.12em] tabular-nums"
+        style={{ height: 30, background: "var(--bg-surface)", borderTop: "1px solid var(--border-muted)", color: "var(--ink-faint)" }}
+      >
+        <div className="max-w-[1600px] mx-auto w-full px-4 flex items-center gap-0">
+          <span className="px-2 py-0.5 font-bold" style={{ background: "var(--amber)", color: "#14120a" }}>
+            {modeLabel}
+          </span>
+          <span className="px-3" style={{ color: "var(--ink-muted)" }}>{selectedLang.label.toUpperCase()}</span>
+          <span className="px-3" style={{ borderLeft: "1px solid var(--border)" }}>{lineCount} LN</span>
+          <span className="px-3 hidden sm:inline" style={{ borderLeft: "1px solid var(--border)" }}>UTF-8</span>
+          <span className="ml-auto hidden md:inline">CTRL+ENTER ▸ RUN AUDIT</span>
+        </div>
+      </footer>
     </div>
   );
 }
 
 function EmptyState() {
-  const features = [
-    { icon: Bug,         label: "Bug detection",    bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.18)",   color: "#f87171" },
-    { icon: ShieldAlert, label: "Security audit",   bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.18)",  color: "#fb923c" },
-    { icon: Zap,         label: "Performance tips", bg: "rgba(234,179,8,0.08)",   border: "rgba(234,179,8,0.18)",   color: "#facc15" },
-    { icon: Wand2,       label: "Refactored code",  bg: "rgba(59,130,246,0.08)",  border: "rgba(59,130,246,0.18)",  color: "#60a5fa" },
+  const checks = [
+    ["01", "BUG DETECTION",     "logic faults · null refs · leaks"],
+    ["02", "SECURITY AUDIT",    "injection · XSS · OWASP flags"],
+    ["03", "PERFORMANCE SCAN",  "hot loops · wasted allocations"],
+    ["04", "AI REFACTOR",       "full rewritten source output"],
   ];
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 rounded-2xl gap-5"
-      style={{ border: "1px dashed rgba(59,130,246,0.2)", background: "rgba(59,130,246,0.02)" }}>
-
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
-        style={{
-          background: "linear-gradient(135deg, rgba(29,78,216,0.2), rgba(8,145,178,0.1))",
-          border: "1px solid rgba(59,130,246,0.25)",
-          boxShadow: "0 0 24px rgba(37,99,235,0.12)",
-        }}>
-        <Terminal className="w-6 h-6 text-blue-400" />
+    <div className="flex-1 flex flex-col panel">
+      <div
+        className="flex items-center px-3 py-2 flex-shrink-0"
+        style={{ borderBottom: "1px solid var(--border-muted)", background: "var(--bg-elevated)" }}
+      >
+        <span className="panel-title">▌ Audit Report</span>
       </div>
 
-      <div>
-        <h2 className="text-base font-semibold text-white mb-1.5">Ready to review</h2>
-        <p className="text-sm text-slate-500 leading-relaxed max-w-[240px]">
-          Paste your code and click <strong className="text-slate-300">Review Code</strong> or press{" "}
-          <kbd className="px-1.5 py-0.5 rounded text-xs font-mono text-slate-300"
-            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-muted)" }}>Ctrl+Enter</kbd>
+      <div className="flex-1 flex flex-col justify-center p-6 gap-6">
+        <div>
+          <p className="text-[15px] font-bold mb-1" style={{ color: "var(--ink)" }}>
+            AWAITING INPUT<span className="cursor-blink ml-1" />
+          </p>
+          <p className="text-[12px] leading-relaxed" style={{ color: "var(--ink-muted)" }}>
+            Load source into the editor, then run the audit.
+          </p>
+        </div>
+
+        <div style={{ border: "1px solid var(--border-muted)" }}>
+          {checks.map(([n, title, desc], i) => (
+            <div
+              key={n}
+              className="flex items-baseline gap-3 px-3 py-2.5"
+              style={i > 0 ? { borderTop: "1px solid var(--border)" } : undefined}
+            >
+              <span className="text-[10px] tabular-nums" style={{ color: "var(--amber)" }}>{n}</span>
+              <div>
+                <p className="text-[11px] font-bold tracking-[0.15em]" style={{ color: "var(--ink)" }}>{title}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--ink-faint)" }}>{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[10px] tracking-[0.12em]" style={{ color: "var(--ink-faint)" }}>
+          13 LANGUAGES SUPPORTED · NO CODE STORED
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function LoadingState() {
+  const logs = [
+    "$ codereview --run --deep",
+    "reading source buffer… ok",
+    "tokenizing input… ok",
+    "loading llama-3.3-70b via groq… ok",
+    "running heuristics: bugs sec perf style",
+    "compiling audit report…",
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col panel">
+      <div
+        className="flex items-center justify-between px-3 py-2 flex-shrink-0"
+        style={{ borderBottom: "1px solid var(--border-muted)", background: "var(--bg-elevated)" }}
+      >
+        <span className="panel-title">▌ Audit Report</span>
+        <span className="led led-busy" />
+      </div>
+
+      <div className="p-4 flex flex-col gap-1.5 text-[12px]" style={{ color: "var(--ink-muted)" }}>
+        {logs.map((line, i) => (
+          <p key={i} className="log-line" style={{ animationDelay: `${i * 450}ms` }}>
+            {line.startsWith("$")
+              ? <span style={{ color: "var(--amber)" }}>{line}</span>
+              : <><span style={{ color: "var(--ink-faint)" }}>▸ </span>{line}</>}
+          </p>
+        ))}
+        <p className="log-line" style={{ animationDelay: `${logs.length * 450}ms` }}>
+          <span className="cursor-blink" />
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 w-full max-w-[280px]">
-        {features.map(({ icon: Icon, label, bg, border, color }) => (
-          <div key={label}
-            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium"
-            style={{ background: bg, border: `1px solid ${border}`, color }}>
-            <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-            {label}
-          </div>
-        ))}
+      <div className="px-4 pb-4 mt-auto flex flex-col gap-2">
+        <div className="skeleton h-[64px]" />
+        <div className="skeleton h-[40px]" />
+        <div className="skeleton h-[90px]" />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bug, ShieldAlert, Zap, Paintbrush, ChevronDown, ChevronUp, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export interface Issue {
   id: string;
@@ -13,75 +13,83 @@ export interface Issue {
   suggestion: string;
 }
 
-const TYPE_CFG = {
-  bug:         { icon: Bug,        label: "Bug",         color: "#f87171", bg: "rgba(239,68,68,0.06)",  border: "rgba(239,68,68,0.2)",  tagBg: "rgba(239,68,68,0.1)"  },
-  security:    { icon: ShieldAlert, label: "Security",   color: "#fb923c", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.2)", tagBg: "rgba(249,115,22,0.1)" },
-  performance: { icon: Zap,        label: "Performance", color: "#fbbf24", bg: "rgba(234,179,8,0.06)",  border: "rgba(234,179,8,0.2)",  tagBg: "rgba(234,179,8,0.1)"  },
-  style:       { icon: Paintbrush, label: "Style",       color: "#60a5fa", bg: "rgba(59,130,246,0.06)", border: "rgba(59,130,246,0.2)", tagBg: "rgba(59,130,246,0.1)" },
+const TYPE_LABEL: Record<Issue["type"], string> = {
+  bug:         "BUG",
+  security:    "SEC",
+  performance: "PERF",
+  style:       "STYLE",
 };
 
-const SEV_CFG = {
-  critical: { icon: AlertCircle,  color: "#f87171", dot: "#ef4444", label: "Critical", glow: "0 0 5px rgba(239,68,68,0.5)" },
-  warning:  { icon: AlertTriangle, color: "#fbbf24", dot: "#f59e0b", label: "Warning",  glow: "0 0 5px rgba(245,158,11,0.5)" },
-  info:     { icon: Info,          color: "#60a5fa", dot: "#3b82f6", label: "Info",     glow: "0 0 5px rgba(59,130,246,0.5)" },
+const SEV_CFG: Record<Issue["severity"], { color: string; code: string; label: string }> = {
+  critical: { color: "var(--sev-critical)", code: "E", label: "CRITICAL" },
+  warning:  { color: "var(--sev-warning)",  code: "W", label: "WARNING" },
+  info:     { color: "var(--sev-info)",     code: "I", label: "INFO" },
 };
 
+/* diagnostics styled like compiler output: E01 · SEC · L42 — title */
 export default function IssueCard({ issue, index }: { issue: Issue; index: number }) {
   const [expanded, setExpanded] = useState(false);
-  const t = TYPE_CFG[issue.type]     ?? TYPE_CFG.bug;
-  const s = SEV_CFG[issue.severity]  ?? SEV_CFG.info;
-  const TypeIcon     = t.icon;
-  const SeverityIcon = s.icon;
+  const s = SEV_CFG[issue.severity] ?? SEV_CFG.info;
+  const code = `${s.code}${String(index + 1).padStart(2, "0")}`;
 
   return (
     <div
-      className="rounded-xl overflow-hidden animate-slide-in"
-      style={{ background: t.bg, border: `1px solid ${t.border}`, animationDelay: `${index * 55}ms`, animationFillMode: "both" }}
+      className="animate-slide-in"
+      style={{
+        background: "var(--bg-panel)",
+        borderTop: "1px solid var(--border)",
+        borderRight: "1px solid var(--border)",
+        borderBottom: "1px solid var(--border)",
+        borderLeft: `2px solid ${s.color}`,
+        animationDelay: `${index * 55}ms`,
+        animationFillMode: "both",
+      }}
     >
-      {/* Header row */}
       <button
-        className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-white/[0.025] transition-colors"
+        className="w-full text-left px-3 py-2.5 flex items-start gap-3 hover:bg-white/[0.02] transition-colors cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <TypeIcon className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: t.color }} />
+        <span
+          className="text-[11px] font-bold tabular-nums flex-shrink-0 mt-px"
+          style={{ color: s.color }}
+        >
+          {code}
+        </span>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold" style={{ color: t.color }}>{issue.title}</span>
+          <div className="text-[13px] font-medium leading-snug" style={{ color: "var(--ink)" }}>
+            {issue.title}
+          </div>
+          <div className="flex items-center gap-2 mt-1 text-[10px] tracking-[0.12em]">
+            <span style={{ color: s.color }}>{s.label}</span>
+            <span style={{ color: "var(--ink-faint)" }}>·</span>
+            <span style={{ color: "var(--ink-muted)" }}>{TYPE_LABEL[issue.type] ?? "BUG"}</span>
             {issue.line && (
-              <span className="text-[11px] px-1.5 py-0.5 rounded font-mono text-slate-500"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                line {issue.line}
-              </span>
+              <>
+                <span style={{ color: "var(--ink-faint)" }}>·</span>
+                <span className="tabular-nums" style={{ color: "var(--ink-muted)" }}>L{issue.line}</span>
+              </>
             )}
           </div>
-
-          <div className="flex items-center gap-2 mt-1">
-            <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: s.color }}>
-              <SeverityIcon className="w-3 h-3" />
-              {s.label}
-            </span>
-            <span className="text-slate-700 text-xs">·</span>
-            <span className="text-[11px] px-1.5 py-0.5 rounded font-medium" style={{ color: t.color, background: t.tagBg }}>
-              {t.label}
-            </span>
-          </div>
         </div>
 
-        <div className="text-slate-600 flex-shrink-0 mt-0.5">
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </div>
+        <span className="flex-shrink-0 mt-0.5" style={{ color: "var(--ink-faint)" }}>
+          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </span>
       </button>
 
-      {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <p className="text-sm text-slate-300 leading-relaxed">{issue.message}</p>
-          <div className="rounded-lg p-3" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: t.color, opacity: 0.65 }}>
-              Suggested fix
+        <div className="px-3 pb-3 pt-2.5 space-y-2.5" style={{ borderTop: "1px dashed var(--border-muted)" }}>
+          <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--ink-muted)" }}>
+            {issue.message}
+          </p>
+          <div className="p-2.5" style={{ background: "var(--bg-base)", border: "1px solid var(--border)" }}>
+            <p className="text-[9px] font-bold tracking-[0.22em] mb-1.5" style={{ color: s.color }}>
+              ── SUGGESTED FIX
             </p>
-            <p className="text-sm text-slate-300 leading-relaxed">{issue.suggestion}</p>
+            <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--ink)" }}>
+              {issue.suggestion}
+            </p>
           </div>
         </div>
       )}
